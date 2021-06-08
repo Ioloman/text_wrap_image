@@ -1,0 +1,19 @@
+body {
+    padding-top: 3.5rem;
+}
+
+html, body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    display: table;
+}
+
+footer {
+    display: table-row;
+    height: 0;
+}
+
+.space-created {
+    margin-top: 1rem;
+}
