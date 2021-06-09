@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block content %}
+    <main role="main">
+        Название: {{ room.name }}
+        Текст: {{ room.text }}
+        <form class="form-group w-50 my-3" method="post">
+            <div class="input-group mb-3">
+                <span class="input-group-text">x</span>
+                <input type="text" class="form-control" placeholder="x coord" aria-label="Username">
+                <span class="input-group-text">y</span>
+                <input type="text" class="form-control" placeholder="y coord" aria-label="Server">
+                <span class="input-group-text">R</span>
+                <input type="text" class="form-control" placeholder="radius" aria-label="Server">
+                <button type="submit" class="btn btn-primary">Добавить</button>
+            </div>
+
+        </form>
+        {% if user == host %}
+            <button type="submit" class="btn btn-primary">Остановить рисование</button>
+            <button type="submit" class="btn btn-primary">Удалить комнату</button>
+        {% endif %}
+        {% if user in room.users and room.is_drawing == False and room.image %}
+            <img src="{{ room.image.url }}">
+            <button type="submit" class="btn btn-primary">Скачать</button>
+        {% endif %}
+
+    </main>
+{% endblock %}
+{% block javascript %}
+    <script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        $(document).ready(() => {
+            $.ajaxSetup({
+                headers: {"X-CSRFToken": getCookie("csrftoken")}
+            });
+
+        })
+    </script>
+{% endblock %}

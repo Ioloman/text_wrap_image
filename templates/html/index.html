@@ -1,20 +1,77 @@
 {% extends 'base.html' %}
+{% load widget_tweaks %}
+{% load static %}
 
 {% block content %}
-    {% load static %}
     <main role="main">
-
-        <!-- Main jumbotron for a primary marketing message or call to action -->
-        <div class="jumbotron">
+        {% if user.is_authenticated %}
             <div class="container">
-                <h1 class="display-3">Обертка текста</h1>
-                <p><span>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Atque consequatur ea enim facilis iste nemo odio, perferendis quae rerum totam? Excepturi maiores obcaecati officiis tempore! Eligendi excepturi maiores nihil veniam?</span><span>Dignissimos esse excepturi facere fuga id illum, impedit ipsum itaque modi natus nihil quo? Alias at consectetur error facere fugit mollitia natus nemo veniam voluptatem! Corporis ipsam optio quidem recusandae.</span>
-                </p>
-                <p><a class="btn btn-primary btn-lg" href="" role="button">Список услуг &raquo;</a></p>
+                <div class="row">
+                    <div class="col-lg-1"><button class="badge bg-primary mb-1" id="modal-button" data-bs-toggle="modal" data-bs-target="#modal">Создать</button></div>
+                    <div class="col-lg-8 col-md-11 col-sm-12">
+                        <div class="row">
+                            <div class="list-group col-lg-9 col-md-10 col-sm-11 col-12 mx-auto">
+                                {% for room in rooms %}
+                                    <a href="{% url 'app:room' room.id %}"
+                                       class="list-group-item list-group-item-action flex-column align-items-start {% if room.is_drawing %}active{% endif %}">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h5 class="mb-1">{{ room.name }}</h5>
+                                            <small>Статус: {% if room.is_drawing %}активна{% else %}
+                                                остановлена{% endif %}</small>
+                                        </div>
+                                        <p class="mb-1">Текст: {{ room.text|truncatechars:190 }}
+                                        </p>
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col"></div>
+                </div>
             </div>
-        </div>
+            <div class="modal fade" id="modal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel">Создать комнату</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form method="post" action="{% url 'app:create_room' %}">
+                            {% csrf_token %}
+                            <div class="modal-body">
+                                <div class="form-group">
+                                    <label>Название</label>
+                                    {% render_field form.name class+="form-control" %}
+                                    <small class="form-text text-muted">Название комнаты</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>Текст</label>
+                                    {% render_field form.text class+="form-control" %}
+                                    <small class="form-text text-muted">Текст картинки</small>
+                                </div>
+                            </div>
 
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                                <button type="submit" class="btn btn-primary">Создать</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
 
 
     </main>
+{% endblock %}
+
+{% block javascript %}
+    <script>
+        var myModal = document.getElementById('myModal')
+        var myInput = document.getElementById('myInput')
+
+        myModal.addEventListener('shown.bs.modal', function () {
+            myInput.focus()
+        })
+    </script>
 {% endblock %}
