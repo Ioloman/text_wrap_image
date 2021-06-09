@@ -9,6 +9,7 @@
         Название: {{ room.name }}
         Текст: {{ room.text }}<br>
         Координаты x: [0;600], y: [0:900]<br>
+{#    Форма добавления круга#}
         <form class="form-group w-50 my-3" method="post">
             <div class="input-group mb-3">
                 <span class="input-group-text">x</span>
@@ -22,13 +23,13 @@
                 <input type="hidden" value="{{ room.id }}" name="room_id" id="roomID">
             </div>
         </form>
-
+{#        Кнопки создателя комнаты - Остановить и Удалить#}
         {% if user == host %}
             {% if room.is_drawing %}
                 <button type="submit" class="btn btn-primary" id="stopDrawing">Остановить рисование</button>{% endif %}
             <button type="submit" class="btn btn-primary" id="deleteRoom">Удалить комнату</button>
         {% endif %}
-
+{#        Изображение и скачать изображение#}
         {% if user in users and room.is_drawing == False and room.image %}
             <br>
             <img src="{{ room.image.url }}">
@@ -36,7 +37,7 @@
             <a href="{% url 'app:download_image' room.id %}" class="btn btn-primary" download>Скачать</a>
         {% endif %}
 
-
+        {# Список кругов #}
         <div class="container mt-3">
             <div class="row" id="circleList">
                 <div class="col-lg-5 col-md-7">
@@ -55,6 +56,7 @@
 {% endblock %}
 {% block javascript %}
     <script>
+        //функция для получения кука
         function getCookie(name) {
             let cookieValue = null;
             if (document.cookie && document.cookie !== '') {
@@ -69,7 +71,7 @@
             }
             return cookieValue;
         }
-
+        // хэндлер который обновляет список кругов
         const updateList = function (event) {
             $.get(
                 "{% url 'app:circle_list' %}",
@@ -87,6 +89,7 @@
             $.ajaxSetup({
                 headers: {"X-CSRFToken": getCookie("csrftoken")}
             });
+            // хэндлер для добавления круга
             $('#addButton').on("click", function (event) {
                 if ($("input[required]").val().length !== 0) {
                     event.preventDefault();
@@ -106,7 +109,9 @@
                     });
                 }
             })
+            // хэндлер для обновления списка
             $('#updateButton').on("click", updateList);
+            // хэндлер для удаления комнаты
             $('#deleteRoom').on("click", function (event) {
                 event.preventDefault();
                 $.ajax({
@@ -123,6 +128,7 @@
                     alert(`Error: ${textStatus} ${error}`)
                 });
             });
+            // хэндлер для остановки комнаты
             $('#stopDrawing').on("click", function (event) {
                 event.preventDefault();
                 $.ajax({

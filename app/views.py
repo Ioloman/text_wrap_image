@@ -1,17 +1,15 @@
 import os
 import string
-from io import StringIO
-from random import choice, choices
-
+from random import choices
 from django.contrib.auth import login, authenticate
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.views import LoginView, LogoutView
 from django.core.files import File
-from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.http import HttpResponseRedirect, JsonResponse, FileResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
-from django.views.generic import ListView, DetailView, TemplateView
+from django.views.generic import ListView, DetailView
 from django.views.generic.edit import CreateView, FormView
 from app.forms import RoomForm
 from app.models import Room, RoomToUser, Circle
@@ -19,13 +17,24 @@ from app.image_text_wrap.wrap import get_image
 
 
 def send_circle(request):
+    """
+    Создает круг, полученный из ajax запроса
+    """
     if request.is_ajax() and request.method == 'POST':
-        circle = Circle(x=request.POST.get('x'), y=request.POST.get('y'), r=request.POST.get('r'), room_id=request.POST.get('room_id'))
+        circle = Circle(
+            x=request.POST.get('x'),
+            y=request.POST.get('y'),
+            r=request.POST.get('r'),
+            room_id=request.POST.get('room_id')
+        )
         circle.save()
         return JsonResponse({'status': 'Success'})
 
 
 def delete_room(request):
+    """
+    Удаляет закрывает комнату по ajax запросу
+    """
     if request.is_ajax() and request.method == 'POST':
         room = Room.objects.get(id=request.POST.get('room_id'))
         room.is_open = False
@@ -34,12 +43,18 @@ def delete_room(request):
 
 
 def stop_drawing(request):
+    """
+    останавливает комнату и генерирует изображение
+    """
     if request.is_ajax() and request.method == 'POST':
         room = Room.objects.get(id=request.POST.get('room_id'))
         room.is_drawing = False
+        # получаем список кругов в необходимом для входа формате
         circles = room.circle_set.all()
         circle_list = [(circle.x, circle.y, circle.r) for circle in circles]
+        # получаем изображение в формате PIL
         image = get_image(circle_list, room.text)
+        # сохраняем в файл и загружаем в бд
         temp_name = room.name
         temp_name += str(choices(string.ascii_lowercase, k=5))
         temp_name += '.png'
@@ -50,17 +65,27 @@ def stop_drawing(request):
         return JsonResponse({'status': 'Success'})
 
 
+@login_required
 def download_image(request, room_id):
+    """
+    возвращает картинку
+    """
     room = Room.objects.get(id=room_id)
     return FileResponse(open(room.image.path, 'rb'))
 
 
 def circle_list(request):
+    """
+    возвращает текущий список кругов по комнате
+    """
     if request.is_ajax() and request.method == 'GET':
         return render(request, 'ajax\\circle_list.html', {'circles': Room.objects.get(id=request.GET.get('room_id')).circle_set.all().order_by('index')})
 
 
 class HomePage(ListView):
+    """
+    Домашняя страница со списком комнат
+    """
     template_name = 'html/index.html'
     context_object_name = 'rooms'
     queryset = Room.objects.filter(is_open=True).order_by('-created_at')
@@ -72,6 +97,9 @@ class HomePage(ListView):
 
 
 class CreateRoomView(FormView):
+    """
+    Класс для создания комнаты
+    """
     form_class = RoomForm
 
     def form_valid(self, form):
@@ -86,6 +114,9 @@ class CreateRoomView(FormView):
 
 
 class RoomView(DetailView):
+    """
+    Просмотр комнаты
+    """
     model = Room
     template_name = 'html/room.html'
     context_object_name = 'room'
@@ -100,6 +131,7 @@ class RoomView(DetailView):
 
     def get(self, request, *args, **kwargs):
         room = Room.objects.get(id=kwargs['room_id'])
+        # если нет доступа в комнату, то переадресация на домашнюю
         if room.is_open is False or (room.is_drawing is False and request.user not in room.users.all()):
             return redirect('app:home')
         else:
