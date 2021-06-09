@@ -14,7 +14,7 @@
 1) x: 100, y: 100, R: 50
 2) x: 300, y: 700, R: 150
 
-#изображение
+![alt text](https://github.com/Ioloman/text_wrap_image/blob/master/images/тест2.png)
 
 Пример 2:
 Текст: АйБэа
@@ -22,7 +22,7 @@
 1) x: 300, y: 500, R: 200
 2) x: 100, y: 100, R: 50
 
-#изображение
+![alt text](https://github.com/Ioloman/text_wrap_image/blob/master/images/тест.png)
 
 Пример 3:
 Текст:  Hellow world
@@ -30,4 +30,4 @@
 1) x: 100, y: 200, R: 100
 2) x: 400, y: 700, R: 50
 
-#изображение
+![alt text](https://github.com/Ioloman/text_wrap_image/blob/master/images/кек.png)
