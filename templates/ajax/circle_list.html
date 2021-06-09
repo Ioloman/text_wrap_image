@@ -1,0 +1,9 @@
+<div class="col-lg-5 col-md-7">
+    <ul class="list-group mx-1">
+        {% for circle in circles %}
+            <li class="mb-1 list-group-item">#{{ circle.index }} x: {{ circle.x }}, y: {{ circle.y }},
+                R: {{ circle.r }}</li>
+
+        {% endfor %}
+    </ul>
+</div>

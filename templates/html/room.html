@@ -2,30 +2,54 @@
 {% load static %}
 {% load widget_tweaks %}
 
+{% block title %}Комната {{ room.name }}{% endblock %}
+
 {% block content %}
     <main role="main">
         Название: {{ room.name }}
-        Текст: {{ room.text }}
+        Текст: {{ room.text }}<br>
+        Координаты x: [0;600], y: [0:900]<br>
         <form class="form-group w-50 my-3" method="post">
             <div class="input-group mb-3">
                 <span class="input-group-text">x</span>
-                <input type="text" class="form-control" placeholder="x coord" aria-label="Username">
+                <input type="text" class="form-control" placeholder="x coord" required name="x">
                 <span class="input-group-text">y</span>
-                <input type="text" class="form-control" placeholder="y coord" aria-label="Server">
+                <input type="text" class="form-control" placeholder="y coord" required name="y">
                 <span class="input-group-text">R</span>
-                <input type="text" class="form-control" placeholder="radius" aria-label="Server">
-                <button type="submit" class="btn btn-primary">Добавить</button>
+                <input type="text" class="form-control" placeholder="radius" required name="r">
+                <button type="submit" class="btn btn-primary" id="addButton">Добавить</button>
+                <button type="button" class="btn btn-primary" id="updateButton">Обновить</button>
+                <input type="hidden" value="{{ room.id }}" name="room_id" id="roomID">
             </div>
-
         </form>
+
         {% if user == host %}
-            <button type="submit" class="btn btn-primary">Остановить рисование</button>
-            <button type="submit" class="btn btn-primary">Удалить комнату</button>
+            {% if room.is_drawing %}
+                <button type="submit" class="btn btn-primary" id="stopDrawing">Остановить рисование</button>{% endif %}
+            <button type="submit" class="btn btn-primary" id="deleteRoom">Удалить комнату</button>
         {% endif %}
-        {% if user in room.users and room.is_drawing == False and room.image %}
+
+        {% if user in users and room.is_drawing == False and room.image %}
+            <br>
             <img src="{{ room.image.url }}">
-            <button type="submit" class="btn btn-primary">Скачать</button>
+            <br>
+            <a href="{% url 'app:download_image' room.id %}" class="btn btn-primary" download>Скачать</a>
         {% endif %}
+
+
+        <div class="container mt-3">
+            <div class="row" id="circleList">
+                <div class="col-lg-5 col-md-7">
+                    <ul class="list-group mx-1">
+                        {% for circle in circles %}
+                            <li class="mb-1 list-group-item">#{{ circle.index }} x: {{ circle.x }}, y: {{ circle.y }},
+                                R: {{ circle.r }}</li>
+
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
 
     </main>
 {% endblock %}
@@ -46,9 +70,74 @@
             return cookieValue;
         }
 
+        const updateList = function (event) {
+            $.get(
+                "{% url 'app:circle_list' %}",
+                {room_id: $('#roomID').val()},
+                "html"
+            ).done((data, textStatus, jqXHR) => {
+                $('#circleList').html(data)
+            }).fail((jqXHR, textStatus, error) => {
+                alert(`Error: ${textStatus} ${error}`)
+            });
+
+        }
+
         $(document).ready(() => {
             $.ajaxSetup({
                 headers: {"X-CSRFToken": getCookie("csrftoken")}
+            });
+            $('#addButton').on("click", function (event) {
+                if ($("input[required]").val().length !== 0) {
+                    event.preventDefault();
+                    const button = $(this);
+                    $.ajax({
+                        url: "{% url 'app:send_circle' %}",
+                        data: button.parents("form").serialize(),
+                        type: "POST",
+                        dataType: "json"
+                    }).done((data, textStatus, jqXHR) => {
+                        if (data.status === 'Success') {
+                            updateList(event);
+                        } else
+                            alert('Error');
+                    }).fail((jqXHR, textStatus, error) => {
+                        alert(`Error: ${textStatus} ${error}`)
+                    });
+                }
+            })
+            $('#updateButton').on("click", updateList);
+            $('#deleteRoom').on("click", function (event) {
+                event.preventDefault();
+                $.ajax({
+                    url: "{% url 'app:delete_room' %}",
+                    data: {room_id: $('#roomID').val()},
+                    type: "POST",
+                    dataType: "json"
+                }).done((data, textStatus, jqXHR) => {
+                    if (data.status === 'Success') {
+                        window.location.href = "{% url 'app:home' %}";
+                    } else
+                        alert('Error');
+                }).fail((jqXHR, textStatus, error) => {
+                    alert(`Error: ${textStatus} ${error}`)
+                });
+            });
+            $('#stopDrawing').on("click", function (event) {
+                event.preventDefault();
+                $.ajax({
+                    url: "{% url 'app:stop_drawing' %}",
+                    data: {room_id: $('#roomID').val()},
+                    type: "POST",
+                    dataType: "json"
+                }).done((data, textStatus, jqXHR) => {
+                    if (data.status === 'Success') {
+                        location.reload();
+                    } else
+                        alert('Error');
+                }).fail((jqXHR, textStatus, error) => {
+                    alert(`Error: ${textStatus} ${error}`)
+                });
             });
 
         })
